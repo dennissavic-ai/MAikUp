@@ -15,6 +15,12 @@ import makeupRoutes from './routes/makeup';
 import hairstyleRoutes from './routes/hairstyles';
 import favoriteRoutes from './routes/favorites';
 import lookRoutes from './routes/looks';
+import adminRoutes from './routes/admin';
+import recommendationRoutes from './routes/recommendations';
+import analyticsRoutes from './routes/analytics';
+import sharingRoutes from './routes/sharing';
+import uploadRoutes from './routes/uploads';
+import notificationRoutes from './routes/notifications';
 
 const app = express();
 
@@ -60,6 +66,12 @@ app.use('/api/makeup', makeupRoutes);
 app.use('/api/hairstyles', hairstyleRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/looks', lookRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/recommendations', recommendationRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/sharing', sharingRoutes);
+app.use('/api/uploads', uploadRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // ─── Error Handling ──────────────────────────────────────────
 

@@ -8,12 +8,18 @@ datasource db {
 
 // ─── Users & Auth ────────────────────────────────────────────
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model User {
   id              String   @id @default(uuid())
   firebaseUid     String   @unique @map("firebase_uid")
   email           String   @unique
   displayName     String?  @map("display_name")
   photoUrl        String?  @map("photo_url")
+  role            UserRole @default(USER)
   skinTone        String?  @map("skin_tone")
   skinUndertone   String?  @map("skin_undertone")
   faceShape       String?  @map("face_shape")
@@ -24,6 +30,8 @@ model User {
   favorites       Favorite[]
   lookHistory     LookHistory[]
   savedLooks      SavedLook[]
+  sharedLooks     SharedLook[]
+  deviceTokens    DeviceToken[]
 
   @@map("users")
 }
@@ -213,6 +221,75 @@ model SavedLook {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  sharedLooks   SharedLook[]
+
   @@index([userId])
   @@map("saved_looks")
+}
+
+// ─── Social Sharing ──────────────────────────────────────────
+
+model SharedLook {
+  id          String   @id @default(uuid())
+  savedLookId String   @map("saved_look_id")
+  userId      String   @map("user_id")
+  shareCode   String   @unique @map("share_code")
+  isPublic    Boolean  @default(true) @map("is_public")
+  viewCount   Int      @default(0) @map("view_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  savedLook SavedLook @relation(fields: [savedLookId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([shareCode])
+  @@map("shared_looks")
+}
+
+// ─── Analytics ───────────────────────────────────────────────
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  eventType String   @map("event_type")  // "product_view", "look_try", "hairstyle_view", etc.
+  entityId  String?  @map("entity_id")   // ID of the product/look/hairstyle
+  entityType String? @map("entity_type") // "makeup_product", "makeup_look", "hairstyle"
+  userId    String?  @map("user_id")
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([eventType, entityId])
+  @@index([entityType, createdAt])
+  @@index([userId])
+  @@map("analytics_events")
+}
+
+// ─── Push Notifications ──────────────────────────────────────
+
+model DeviceToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  platform  String   // "android" or "ios"
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("device_tokens")
+}
+
+// ─── Skin Tone Recommendations ───────────────────────────────
+
+model SkinToneRecommendation {
+  id            String @id @default(uuid())
+  skinTone      String @map("skin_tone")      // "fair", "light", "medium", "olive", "tan", "deep", "very_deep"
+  skinUndertone String @map("skin_undertone")  // "warm", "cool", "neutral"
+  productId     String @map("product_id")
+  matchScore    Float  @default(0.8) @map("match_score") // 0.0 - 1.0 how well it matches
+  notes         String?
+
+  @@unique([skinTone, skinUndertone, productId])
+  @@index([skinTone, skinUndertone])
+  @@map("skin_tone_recommendations")
 }

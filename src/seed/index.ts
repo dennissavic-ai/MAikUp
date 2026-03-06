@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { makeupProducts } from './makeup-data';
 import { makeupLooks } from './looks-data';
 import { hairstyles } from './hairstyle-data';
+import { skinToneRecommendations } from './recommendation-data';
 
 const prisma = new PrismaClient();
 
@@ -14,6 +15,9 @@ async function main() {
   await prisma.favorite.deleteMany();
   await prisma.lookHistory.deleteMany();
   await prisma.savedLook.deleteMany();
+  await prisma.skinToneRecommendation.deleteMany();
+  await prisma.analyticsEvent.deleteMany();
+  await prisma.sharedLook.deleteMany();
   await prisma.makeupProduct.deleteMany();
   await prisma.hairstyle.deleteMany();
 
@@ -58,6 +62,25 @@ async function main() {
     )
   );
   console.log(`Seeded ${createdHairstyles.length} hairstyles`);
+
+  // Seed skin tone recommendations
+  let recCount = 0;
+  for (const rec of skinToneRecommendations) {
+    const productId = productMap.get(rec.productName);
+    if (productId) {
+      await prisma.skinToneRecommendation.create({
+        data: {
+          skinTone: rec.skinTone,
+          skinUndertone: rec.skinUndertone,
+          productId,
+          matchScore: rec.matchScore,
+          notes: rec.notes,
+        },
+      });
+      recCount++;
+    }
+  }
+  console.log(`Seeded ${recCount} skin tone recommendations`);
 
   console.log('Seeding complete!');
 }
