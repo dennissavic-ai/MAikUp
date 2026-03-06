@@ -1,0 +1,27 @@
+node_modules
+dist
+
+# Keep environment variables out of version control
+.env
+.env.local
+.env.production
+
+# Firebase service account key
+firebase-service-account.json
+
+# Generated Prisma client
+/generated/prisma
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

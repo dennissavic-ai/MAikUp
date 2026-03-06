@@ -1,0 +1,218 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Users & Auth ────────────────────────────────────────────
+
+model User {
+  id              String   @id @default(uuid())
+  firebaseUid     String   @unique @map("firebase_uid")
+  email           String   @unique
+  displayName     String?  @map("display_name")
+  photoUrl        String?  @map("photo_url")
+  skinTone        String?  @map("skin_tone")
+  skinUndertone   String?  @map("skin_undertone")
+  faceShape       String?  @map("face_shape")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  subscription    Subscription?
+  favorites       Favorite[]
+  lookHistory     LookHistory[]
+  savedLooks      SavedLook[]
+
+  @@map("users")
+}
+
+// ─── Subscriptions ───────────────────────────────────────────
+
+enum SubscriptionTier {
+  FREE
+  BASIC
+  PREMIUM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  TRIALING
+  EXPIRED
+}
+
+model Subscription {
+  id                   String             @id @default(uuid())
+  userId               String             @unique @map("user_id")
+  tier                 SubscriptionTier   @default(FREE)
+  status               SubscriptionStatus @default(ACTIVE)
+  stripeCustomerId     String?            @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?            @unique @map("stripe_subscription_id")
+  currentPeriodStart   DateTime?          @map("current_period_start")
+  currentPeriodEnd     DateTime?          @map("current_period_end")
+  cancelAtPeriodEnd    Boolean            @default(false) @map("cancel_at_period_end")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+// ─── Makeup Catalog ──────────────────────────────────────────
+
+enum MakeupCategory {
+  FACE
+  EYES
+  LIPS
+  CHEEKS
+  BROWS
+}
+
+model MakeupProduct {
+  id            String         @id @default(uuid())
+  category      MakeupCategory
+  subcategory   String
+  name          String
+  description   String?
+  colorHex      String?        @map("color_hex")
+  colorName     String?        @map("color_name")
+  finish        String?
+  intensity     String?
+  imageUrl      String?        @map("image_url")
+  thumbnailUrl  String?        @map("thumbnail_url")
+  tier          SubscriptionTier @default(FREE)
+  isActive      Boolean        @default(true) @map("is_active")
+  sortOrder     Int            @default(0) @map("sort_order")
+  tags          String[]       @default([])
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  favorites     Favorite[]
+  lookProducts  LookProduct[]
+
+  @@index([category, subcategory])
+  @@index([tier])
+  @@map("makeup_products")
+}
+
+// ─── Makeup Looks (Predefined Combinations) ──────────────────
+
+model MakeupLook {
+  id            String         @id @default(uuid())
+  name          String
+  description   String?
+  style         String
+  occasion      String?
+  difficulty    String?
+  imageUrl      String?        @map("image_url")
+  thumbnailUrl  String?        @map("thumbnail_url")
+  tier          SubscriptionTier @default(FREE)
+  isActive      Boolean        @default(true) @map("is_active")
+  sortOrder     Int            @default(0) @map("sort_order")
+  tags          String[]       @default([])
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  products      LookProduct[]
+
+  @@index([style])
+  @@map("makeup_looks")
+}
+
+model LookProduct {
+  id          String @id @default(uuid())
+  lookId      String @map("look_id")
+  productId   String @map("product_id")
+  sortOrder   Int    @default(0) @map("sort_order")
+
+  look    MakeupLook    @relation(fields: [lookId], references: [id], onDelete: Cascade)
+  product MakeupProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([lookId, productId])
+  @@map("look_products")
+}
+
+// ─── Hairstyle Catalog ───────────────────────────────────────
+
+enum HairstyleCategory {
+  CUT
+  UPDO
+  BRAID
+  COLOR
+  ACCESSORY
+}
+
+model Hairstyle {
+  id            String            @id @default(uuid())
+  category      HairstyleCategory
+  subcategory   String
+  name          String
+  description   String?
+  length        String?
+  texture       String?
+  colorHex      String?           @map("color_hex")
+  colorName     String?           @map("color_name")
+  imageUrl      String?           @map("image_url")
+  thumbnailUrl  String?           @map("thumbnail_url")
+  tier          SubscriptionTier  @default(FREE)
+  isActive      Boolean           @default(true) @map("is_active")
+  sortOrder     Int               @default(0) @map("sort_order")
+  tags          String[]          @default([])
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+
+  favorites     Favorite[]
+
+  @@index([category, subcategory])
+  @@index([tier])
+  @@map("hairstyles")
+}
+
+// ─── User Interactions ───────────────────────────────────────
+
+model Favorite {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  productId   String?  @map("product_id")
+  hairstyleId String?  @map("hairstyle_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   MakeupProduct? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  hairstyle Hairstyle?     @relation(fields: [hairstyleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@unique([userId, hairstyleId])
+  @@map("favorites")
+}
+
+model LookHistory {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  lookData  Json     @map("look_data")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("look_history")
+}
+
+model SavedLook {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String
+  lookData  Json     @map("look_data")
+  imageUrl  String?  @map("image_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("saved_looks")
+}

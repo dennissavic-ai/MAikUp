@@ -1,0 +1,48 @@
+{
+  "name": "maikup",
+  "version": "1.0.0",
+  "description": "MAikUp - Virtual Makeup & Hairstyle Try-On Platform Backend",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:seed": "tsx src/seed/index.ts",
+    "db:studio": "prisma studio"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:65417/git/dennissavic-ai/MAikUp"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^7.4.2",
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.3.0",
+    "firebase-admin": "^13.7.0",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.1",
+    "prisma": "^7.4.2",
+    "stripe": "^20.4.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/compression": "^1.8.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^25.3.5",
+    "nodemon": "^3.1.14",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
