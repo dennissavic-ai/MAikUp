@@ -25,6 +25,7 @@ import arAssetRoutes from './routes/ar-assets';
 import trendingRoutes from './routes/trending';
 import searchRoutes from './routes/search';
 import tryOnRoutes from './routes/try-on';
+import docsRoutes from './routes/docs';
 
 const app = express();
 
@@ -79,6 +80,10 @@ app.use('/api/try-on', tieredLimiter, tryOnRoutes);
 
 // Admin routes use tiered limiter (admins get 1000 req/15min)
 app.use('/api/admin', tieredLimiter, adminRoutes);
+
+// ─── API Documentation (no rate limit) ──────────────────────
+
+app.use('/api/docs', docsRoutes);
 
 // ─── Error Handling ──────────────────────────────────────────
 

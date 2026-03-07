@@ -16,6 +16,10 @@ const router = Router();
 router.get('/', async (req: Request, res: Response) => {
   try {
     const section = req.query.section as string;
+    const cacheKey = section ? `trending:featured:${section}` : 'trending:featured';
+    const cached = cache.get(cacheKey);
+    if (cached) return sendSuccess(res, cached);
+
     const now = new Date();
 
     const where: any = {
@@ -44,6 +48,7 @@ router.get('/', async (req: Request, res: Response) => {
       return acc;
     }, {} as Record<string, typeof featured>);
 
+    cache.set(cacheKey, grouped, 300); // 5 min
     sendSuccess(res, grouped);
   } catch (error) {
     sendError(res, 'Failed to fetch featured content', 500);
@@ -53,6 +58,10 @@ router.get('/', async (req: Request, res: Response) => {
 // Get auto-generated trending based on analytics (last 7 days)
 router.get('/auto', async (_req: Request, res: Response) => {
   try {
+    const cacheKey = 'trending:auto';
+    const cached = cache.get(cacheKey);
+    if (cached) return sendSuccess(res, cached);
+
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
     // Get top products
@@ -124,14 +133,17 @@ router.get('/auto', async (_req: Request, res: Response) => {
       trendScore: e._count.id,
     })).filter((h) => h.id);
 
-    sendSuccess(res, {
+    const result = {
       period: '7 days',
       trending: {
         products: trendingProducts,
         looks: trendingLooks,
         hairstyles: trendingHairstyles,
       },
-    });
+    };
+
+    cache.set(cacheKey, result, 900); // 15 min
+    sendSuccess(res, result);
   } catch (error) {
     sendError(res, 'Failed to fetch trending content', 500);
   }
