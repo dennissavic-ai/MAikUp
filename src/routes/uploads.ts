@@ -11,26 +11,9 @@ import crypto from 'crypto';
 const router = Router();
 
 // Generate a presigned upload URL for product/hairstyle images (admin only)
-router.post('/presign', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/presign', authenticate, requireAdmin, validate(schemas.presignUpload), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { contentType, folder } = req.body;
-
-    if (!contentType || !folder) {
-      sendError(res, 'contentType and folder are required');
-      return;
-    }
-
-    const allowedFolders = ['products', 'hairstyles', 'looks', 'user-looks'];
-    if (!allowedFolders.includes(folder)) {
-      sendError(res, `folder must be one of: ${allowedFolders.join(', ')}`);
-      return;
-    }
-
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(contentType)) {
-      sendError(res, `contentType must be one of: ${allowedTypes.join(', ')}`);
-      return;
-    }
 
     const ext = contentType.split('/')[1];
     const key = `${folder}/${crypto.randomUUID()}.${ext}`;
@@ -44,15 +27,9 @@ router.post('/presign', authenticate, requireAdmin, async (req: AuthenticatedReq
 });
 
 // Generate a presigned upload URL for user-generated content (authenticated users)
-router.post('/user-upload', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/user-upload', authenticate, validate(schemas.userUpload), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { contentType } = req.body;
-
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!contentType || !allowedTypes.includes(contentType)) {
-      sendError(res, `contentType must be one of: ${allowedTypes.join(', ')}`);
-      return;
-    }
 
     const ext = contentType.split('/')[1];
     const key = `user-looks/${req.user!.userId}/${crypto.randomUUID()}.${ext}`;

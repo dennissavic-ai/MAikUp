@@ -10,14 +10,9 @@ import { sendSuccess, sendError } from '../utils/response';
 const router = Router();
 
 // Track an analytics event (from mobile app)
-router.post('/track', optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/track', optionalAuth, validate(schemas.trackEvent), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { eventType, entityId, entityType, metadata } = req.body;
-
-    if (!eventType) {
-      sendError(res, 'eventType is required');
-      return;
-    }
 
     await prisma.analyticsEvent.create({
       data: {

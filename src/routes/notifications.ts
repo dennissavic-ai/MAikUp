@@ -12,19 +12,9 @@ import admin from 'firebase-admin';
 const router = Router();
 
 // Register a device token for push notifications
-router.post('/register', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/register', authenticate, validate(schemas.registerDevice), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { token, platform } = req.body;
-
-    if (!token || !platform) {
-      sendError(res, 'token and platform are required');
-      return;
-    }
-
-    if (!['android', 'ios'].includes(platform)) {
-      sendError(res, 'platform must be "android" or "ios"');
-      return;
-    }
 
     // Upsert - update if token exists, create if not
     await prisma.deviceToken.upsert({
@@ -40,14 +30,9 @@ router.post('/register', authenticate, async (req: AuthenticatedRequest, res: Re
 });
 
 // Unregister a device token
-router.delete('/unregister', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.delete('/unregister', authenticate, validate(schemas.unregisterDevice), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { token } = req.body;
-
-    if (!token) {
-      sendError(res, 'token is required');
-      return;
-    }
 
     await prisma.deviceToken.updateMany({
       where: { token, userId: req.user!.userId },
@@ -61,14 +46,9 @@ router.delete('/unregister', authenticate, async (req: AuthenticatedRequest, res
 });
 
 // Send push notification to all users (admin only)
-router.post('/send-all', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/send-all', authenticate, requireAdmin, validate(schemas.sendNotification), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { title, body, data, platform } = req.body;
-
-    if (!title || !body) {
-      sendError(res, 'title and body are required');
-      return;
-    }
 
     const where: any = { isActive: true };
     if (platform) where.platform = platform;
@@ -114,14 +94,9 @@ router.post('/send-all', authenticate, requireAdmin, async (req: AuthenticatedRe
 });
 
 // Send push notification to specific tier (admin only)
-router.post('/send-tier', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/send-tier', authenticate, requireAdmin, validate(schemas.sendTierNotification), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { title, body, data, tier } = req.body;
-
-    if (!title || !body || !tier) {
-      sendError(res, 'title, body, and tier are required');
-      return;
-    }
 
     // Get user IDs with the specified tier
     const subscriptions = await prisma.subscription.findMany({
