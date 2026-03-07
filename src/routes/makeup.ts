@@ -5,12 +5,17 @@ import { AuthenticatedRequest, CatalogFilterQuery } from '../types';
 import { sendSuccess, sendPaginated, sendError } from '../utils/response';
 import { parsePagination } from '../utils/pagination';
 import { Prisma } from '@prisma/client';
+import { cache } from '../services/cache';
 
 const router = Router();
 
 // Get all makeup categories and subcategories
 router.get('/categories', async (_req: Request, res: Response) => {
   try {
+    const cacheKey = 'makeup:categories';
+    const cached = cache.get(cacheKey);
+    if (cached) return sendSuccess(res, cached);
+
     const categories = await prisma.makeupProduct.groupBy({
       by: ['category', 'subcategory'],
       _count: { id: true },
@@ -29,6 +34,7 @@ router.get('/categories', async (_req: Request, res: Response) => {
       return acc;
     }, {} as Record<string, { subcategory: string; count: number }[]>);
 
+    cache.set(cacheKey, grouped, 600); // 10 min
     sendSuccess(res, grouped);
   } catch (error) {
     sendError(res, 'Failed to fetch categories', 500);
@@ -87,6 +93,10 @@ router.get('/products', optionalAuth, async (req: AuthenticatedRequest, res: Res
 // Get a single makeup product
 router.get('/products/:id', async (req: Request, res: Response) => {
   try {
+    const cacheKey = `makeup:product:${req.params.id}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return sendSuccess(res, cached);
+
     const product = await prisma.makeupProduct.findUnique({
       where: { id: req.params.id as string },
     });
@@ -96,6 +106,7 @@ router.get('/products/:id', async (req: Request, res: Response) => {
       return;
     }
 
+    cache.set(cacheKey, product, 300); // 5 min
     sendSuccess(res, product);
   } catch (error) {
     sendError(res, 'Failed to fetch product', 500);
@@ -172,6 +183,10 @@ router.get('/looks/:id', async (req: Request, res: Response) => {
 // Get available finishes
 router.get('/finishes', async (_req: Request, res: Response) => {
   try {
+    const cacheKey = 'makeup:finishes';
+    const cached = cache.get(cacheKey);
+    if (cached) return sendSuccess(res, cached);
+
     const finishes = await prisma.makeupProduct.groupBy({
       by: ['finish'],
       _count: { id: true },
@@ -179,10 +194,9 @@ router.get('/finishes', async (_req: Request, res: Response) => {
       orderBy: { finish: 'asc' },
     });
 
-    sendSuccess(
-      res,
-      finishes.map((f) => ({ finish: f.finish, count: f._count.id }))
-    );
+    const result = finishes.map((f) => ({ finish: f.finish, count: f._count.id }));
+    cache.set(cacheKey, result, 600); // 10 min
+    sendSuccess(res, result);
   } catch (error) {
     sendError(res, 'Failed to fetch finishes', 500);
   }

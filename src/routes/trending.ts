@@ -6,6 +6,7 @@ import { validate } from '../middleware/validate';
 import * as schemas from '../validation/schemas';
 import { AuthenticatedRequest } from '../types';
 import { sendSuccess, sendError } from '../utils/response';
+import { cache } from '../services/cache';
 
 const router = Router();
 

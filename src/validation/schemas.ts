@@ -14,9 +14,9 @@ export const createArAsset = z.object({
   anchorPoint: z.string().optional(),
   blendMode: z.enum(['multiply', 'overlay', 'screen', 'normal']).optional(),
   opacity: z.number().min(0).max(1).optional(),
-  scale: z.record(z.number()).optional(),
-  offset: z.record(z.number()).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  scale: z.record(z.string(), z.number()).optional(),
+  offset: z.record(z.string(), z.number()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   version: z.number().int().positive().optional(),
   fileSizeBytes: z.number().int().nonnegative().optional(),
   isActive: z.boolean().optional(),
@@ -32,9 +32,9 @@ export const updateArAsset = z.object({
   anchorPoint: z.string().nullable().optional(),
   blendMode: z.enum(['multiply', 'overlay', 'screen', 'normal']).nullable().optional(),
   opacity: z.number().min(0).max(1).optional(),
-  scale: z.record(z.number()).nullable().optional(),
-  offset: z.record(z.number()).nullable().optional(),
-  metadata: z.record(z.unknown()).nullable().optional(),
+  scale: z.record(z.string(), z.number()).nullable().optional(),
+  offset: z.record(z.string(), z.number()).nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
   version: z.number().int().positive().optional(),
   fileSizeBytes: z.number().int().nonnegative().nullable().optional(),
   isActive: z.boolean().optional(),
@@ -91,18 +91,18 @@ export const reorderItems = z.object({
 
 export const saveLook = z.object({
   name: z.string().min(1, { message: 'name is required' }),
-  lookData: z.record(z.unknown(), { message: 'lookData is required' }),
+  lookData: z.record(z.string(), z.unknown(), { message: 'lookData is required' }),
   imageUrl: z.string().url().optional(),
 });
 
 export const updateLook = z.object({
   name: z.string().min(1).optional(),
-  lookData: z.record(z.unknown()).optional(),
+  lookData: z.record(z.string(), z.unknown()).optional(),
   imageUrl: z.string().url().nullable().optional(),
 });
 
 export const recordHistory = z.object({
-  lookData: z.record(z.unknown(), { message: 'lookData is required' }),
+  lookData: z.record(z.string(), z.unknown(), { message: 'lookData is required' }),
 });
 
 // ─── Favorites ──────────────────────────────────────────────
@@ -121,7 +121,7 @@ export const trackEvent = z.object({
   eventType: z.string().min(1, { message: 'eventType is required' }),
   entityId: z.string().uuid().optional(),
   entityType: z.enum(['makeup_product', 'makeup_look', 'hairstyle']).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 // ─── Notifications ──────────────────────────────────────────
@@ -138,7 +138,7 @@ export const unregisterDevice = z.object({
 export const sendNotification = z.object({
   title: z.string().min(1, { message: 'title is required' }),
   body: z.string().min(1, { message: 'body is required' }),
-  data: z.record(z.string()).optional(),
+  data: z.record(z.string(), z.string()).optional(),
   platform: z.enum(['android', 'ios']).optional(),
 });
 
@@ -146,7 +146,7 @@ export const sendTierNotification = z.object({
   title: z.string().min(1, { message: 'title is required' }),
   body: z.string().min(1, { message: 'body is required' }),
   tier: z.string().min(1, { message: 'tier is required' }),
-  data: z.record(z.string()).optional(),
+  data: z.record(z.string(), z.string()).optional(),
 });
 
 // ─── Uploads ────────────────────────────────────────────────
