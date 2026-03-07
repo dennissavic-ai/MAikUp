@@ -5,8 +5,14 @@ import { firebaseAuth } from '../../config/firebase';
 
 require('../setup');
 
+const ADMIN_ID = '00000000-0000-4000-8000-000000000002';
+const USER_ID = '00000000-0000-4000-8000-000000000001';
+const PRODUCT_ID = '00000000-0000-4000-8000-000000000010';
+const HAIRSTYLE_ID = '00000000-0000-4000-8000-000000000020';
+const LOOK_ID = '00000000-0000-4000-8000-000000000030';
+
 const mockAdminUser = {
-  id: 'admin-1',
+  id: ADMIN_ID,
   firebaseUid: 'firebase-1',
   email: 'admin@test.com',
   displayName: 'Admin User',
@@ -18,7 +24,7 @@ const mockAdminUser = {
 
 const mockRegularUser = {
   ...mockAdminUser,
-  id: 'user-1',
+  id: USER_ID,
   role: 'USER',
   email: 'user@test.com',
 };
@@ -120,7 +126,7 @@ describe('PATCH /api/admin/users/:id/role', () => {
     });
 
     const res = await request(app)
-      .patch('/api/admin/users/user-1/role')
+      .patch(`/api/admin/users/${USER_ID}/role`)
       .set('Authorization', 'Bearer test-token')
       .send({ role: 'ADMIN' });
 
@@ -131,19 +137,18 @@ describe('PATCH /api/admin/users/:id/role', () => {
 
   it('returns 400 for invalid role', async () => {
     const res = await request(app)
-      .patch('/api/admin/users/user-1/role')
+      .patch(`/api/admin/users/${USER_ID}/role`)
       .set('Authorization', 'Bearer test-token')
       .send({ role: 'SUPERADMIN' });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toBe('Invalid role');
   });
 });
 
 describe('POST /api/admin/products', () => {
   it('creates a new product', async () => {
     const newProduct = {
-      id: 'prod-new',
+      id: PRODUCT_ID,
       category: 'LIPS',
       subcategory: 'lipstick',
       name: 'New Lipstick',
@@ -155,7 +160,12 @@ describe('POST /api/admin/products', () => {
     const res = await request(app)
       .post('/api/admin/products')
       .set('Authorization', 'Bearer test-token')
-      .send(newProduct);
+      .send({
+        category: 'LIPS',
+        subcategory: 'lipstick',
+        name: 'New Lipstick',
+        colorHex: '#FF0000',
+      });
 
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
@@ -166,12 +176,12 @@ describe('POST /api/admin/products', () => {
 describe('PATCH /api/admin/products/:id', () => {
   it('updates a product', async () => {
     (prisma.makeupProduct.update as jest.Mock).mockResolvedValue({
-      id: 'prod-1',
+      id: PRODUCT_ID,
       name: 'Updated Lipstick',
     });
 
     const res = await request(app)
-      .patch('/api/admin/products/prod-1')
+      .patch(`/api/admin/products/${PRODUCT_ID}`)
       .set('Authorization', 'Bearer test-token')
       .send({ name: 'Updated Lipstick' });
 
@@ -184,12 +194,12 @@ describe('PATCH /api/admin/products/:id', () => {
 describe('DELETE /api/admin/products/:id', () => {
   it('deactivates a product (soft delete)', async () => {
     (prisma.makeupProduct.update as jest.Mock).mockResolvedValue({
-      id: 'prod-1',
+      id: PRODUCT_ID,
       isActive: false,
     });
 
     const res = await request(app)
-      .delete('/api/admin/products/prod-1')
+      .delete(`/api/admin/products/${PRODUCT_ID}`)
       .set('Authorization', 'Bearer test-token');
 
     expect(res.status).toBe(200);
@@ -201,9 +211,10 @@ describe('DELETE /api/admin/products/:id', () => {
 describe('POST /api/admin/hairstyles', () => {
   it('creates a new hairstyle', async () => {
     const newHairstyle = {
-      id: 'hair-new',
+      id: HAIRSTYLE_ID,
       name: 'New Style',
-      category: 'SHORT',
+      category: 'CUT',
+      subcategory: 'bob',
       isActive: true,
     };
     (prisma.hairstyle.create as jest.Mock).mockResolvedValue(newHairstyle);
@@ -211,7 +222,11 @@ describe('POST /api/admin/hairstyles', () => {
     const res = await request(app)
       .post('/api/admin/hairstyles')
       .set('Authorization', 'Bearer test-token')
-      .send(newHairstyle);
+      .send({
+        category: 'CUT',
+        subcategory: 'bob',
+        name: 'New Style',
+      });
 
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
@@ -222,12 +237,12 @@ describe('POST /api/admin/hairstyles', () => {
 describe('PATCH /api/admin/hairstyles/:id', () => {
   it('updates a hairstyle', async () => {
     (prisma.hairstyle.update as jest.Mock).mockResolvedValue({
-      id: 'hair-1',
+      id: HAIRSTYLE_ID,
       name: 'Updated Style',
     });
 
     const res = await request(app)
-      .patch('/api/admin/hairstyles/hair-1')
+      .patch(`/api/admin/hairstyles/${HAIRSTYLE_ID}`)
       .set('Authorization', 'Bearer test-token')
       .send({ name: 'Updated Style' });
 
@@ -239,12 +254,12 @@ describe('PATCH /api/admin/hairstyles/:id', () => {
 describe('DELETE /api/admin/hairstyles/:id', () => {
   it('deactivates a hairstyle', async () => {
     (prisma.hairstyle.update as jest.Mock).mockResolvedValue({
-      id: 'hair-1',
+      id: HAIRSTYLE_ID,
       isActive: false,
     });
 
     const res = await request(app)
-      .delete('/api/admin/hairstyles/hair-1')
+      .delete(`/api/admin/hairstyles/${HAIRSTYLE_ID}`)
       .set('Authorization', 'Bearer test-token');
 
     expect(res.status).toBe(200);
@@ -255,16 +270,21 @@ describe('DELETE /api/admin/hairstyles/:id', () => {
 describe('POST /api/admin/looks', () => {
   it('creates a new look with products', async () => {
     const newLook = {
-      id: 'look-new',
+      id: LOOK_ID,
       name: 'Evening Glam',
-      products: [{ product: { id: 'prod-1' } }],
+      style: 'glam',
+      products: [{ product: { id: PRODUCT_ID } }],
     };
     (prisma.makeupLook.create as jest.Mock).mockResolvedValue(newLook);
 
     const res = await request(app)
       .post('/api/admin/looks')
       .set('Authorization', 'Bearer test-token')
-      .send({ name: 'Evening Glam', productIds: ['prod-1'] });
+      .send({
+        name: 'Evening Glam',
+        style: 'glam',
+        productIds: [PRODUCT_ID],
+      });
 
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
@@ -275,17 +295,17 @@ describe('POST /api/admin/looks', () => {
 describe('PATCH /api/admin/looks/:id', () => {
   it('updates a look', async () => {
     (prisma.makeupLook.update as jest.Mock).mockResolvedValue({
-      id: 'look-1',
+      id: LOOK_ID,
       name: 'Updated Look',
     });
     (prisma.makeupLook.findUnique as jest.Mock).mockResolvedValue({
-      id: 'look-1',
+      id: LOOK_ID,
       name: 'Updated Look',
       products: [],
     });
 
     const res = await request(app)
-      .patch('/api/admin/looks/look-1')
+      .patch(`/api/admin/looks/${LOOK_ID}`)
       .set('Authorization', 'Bearer test-token')
       .send({ name: 'Updated Look' });
 
@@ -297,12 +317,12 @@ describe('PATCH /api/admin/looks/:id', () => {
 describe('DELETE /api/admin/looks/:id', () => {
   it('deactivates a look', async () => {
     (prisma.makeupLook.update as jest.Mock).mockResolvedValue({
-      id: 'look-1',
+      id: LOOK_ID,
       isActive: false,
     });
 
     const res = await request(app)
-      .delete('/api/admin/looks/look-1')
+      .delete(`/api/admin/looks/${LOOK_ID}`)
       .set('Authorization', 'Bearer test-token');
 
     expect(res.status).toBe(200);

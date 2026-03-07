@@ -5,8 +5,11 @@ import { firebaseAuth } from '../../config/firebase';
 
 require('../setup');
 
+const USER_ID = '00000000-0000-4000-8000-000000000001';
+const LOOK_ID = '00000000-0000-4000-8000-000000000030';
+
 const mockUser = {
-  id: 'user-1',
+  id: USER_ID,
   firebaseUid: 'firebase-1',
   email: 'test@test.com',
   displayName: 'Test User',
@@ -17,8 +20,8 @@ const mockUser = {
 };
 
 const mockSavedLook = {
-  id: 'look-1',
-  userId: 'user-1',
+  id: LOOK_ID,
+  userId: USER_ID,
   name: 'Date Night',
   lookData: { products: ['prod-1'] },
   imageUrl: null,
@@ -28,8 +31,8 @@ const mockSavedLook = {
 
 const mockSharedLook = {
   id: 'shared-1',
-  savedLookId: 'look-1',
-  userId: 'user-1',
+  savedLookId: LOOK_ID,
+  userId: USER_ID,
   shareCode: 'abc123xy',
   isPublic: true,
   viewCount: 5,
@@ -57,7 +60,7 @@ describe('POST /api/sharing/:savedLookId', () => {
     });
 
     const res = await request(app)
-      .post('/api/sharing/look-1')
+      .post(`/api/sharing/${LOOK_ID}`)
       .set('Authorization', 'Bearer test-token');
 
     expect(res.status).toBe(201);
@@ -74,7 +77,7 @@ describe('POST /api/sharing/:savedLookId', () => {
     });
 
     const res = await request(app)
-      .post('/api/sharing/look-1')
+      .post(`/api/sharing/${LOOK_ID}`)
       .set('Authorization', 'Bearer test-token');
 
     expect(res.status).toBe(200);
@@ -86,7 +89,7 @@ describe('POST /api/sharing/:savedLookId', () => {
     (prisma.savedLook.findFirst as jest.Mock).mockResolvedValue(null);
 
     const res = await request(app)
-      .post('/api/sharing/nonexistent')
+      .post(`/api/sharing/${LOOK_ID}`)
       .set('Authorization', 'Bearer test-token');
 
     expect(res.status).toBe(404);
@@ -134,7 +137,7 @@ describe('DELETE /api/sharing/:savedLookId', () => {
     (prisma.sharedLook.deleteMany as jest.Mock).mockResolvedValue({ count: 1 });
 
     const res = await request(app)
-      .delete('/api/sharing/look-1')
+      .delete(`/api/sharing/${LOOK_ID}`)
       .set('Authorization', 'Bearer test-token');
 
     expect(res.status).toBe(200);

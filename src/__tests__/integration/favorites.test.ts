@@ -5,8 +5,15 @@ import { firebaseAuth } from '../../config/firebase';
 
 require('../setup');
 
+// Valid UUIDs for test data
+const USER_ID = '00000000-0000-4000-8000-000000000001';
+const PRODUCT_ID_1 = '00000000-0000-4000-8000-000000000010';
+const PRODUCT_ID_2 = '00000000-0000-4000-8000-000000000011';
+const HAIRSTYLE_ID_1 = '00000000-0000-4000-8000-000000000020';
+const HAIRSTYLE_ID_2 = '00000000-0000-4000-8000-000000000021';
+
 const mockUser = {
-  id: 'user-1',
+  id: USER_ID,
   firebaseUid: 'firebase-1',
   email: 'test@test.com',
   displayName: 'Test User',
@@ -19,21 +26,21 @@ const mockUser = {
 const mockFavorites = [
   {
     id: 'fav-1',
-    userId: 'user-1',
-    productId: 'prod-1',
+    userId: USER_ID,
+    productId: PRODUCT_ID_1,
     hairstyleId: null,
     createdAt: new Date(),
-    product: { id: 'prod-1', name: 'Red Lipstick' },
+    product: { id: PRODUCT_ID_1, name: 'Red Lipstick' },
     hairstyle: null,
   },
   {
     id: 'fav-2',
-    userId: 'user-1',
+    userId: USER_ID,
     productId: null,
-    hairstyleId: 'hair-1',
+    hairstyleId: HAIRSTYLE_ID_1,
     createdAt: new Date(),
     product: null,
-    hairstyle: { id: 'hair-1', name: 'Beach Waves' },
+    hairstyle: { id: HAIRSTYLE_ID_1, name: 'Beach Waves' },
   },
 ];
 
@@ -85,16 +92,16 @@ describe('POST /api/favorites/makeup/:productId', () => {
   it('adds a makeup product to favorites', async () => {
     const newFav = {
       id: 'fav-3',
-      userId: 'user-1',
-      productId: 'prod-2',
+      userId: USER_ID,
+      productId: PRODUCT_ID_2,
       hairstyleId: null,
       createdAt: new Date(),
-      product: { id: 'prod-2', name: 'Champagne Shadow' },
+      product: { id: PRODUCT_ID_2, name: 'Champagne Shadow' },
     };
     (prisma.favorite.create as jest.Mock).mockResolvedValue(newFav);
 
     const res = await request(app)
-      .post('/api/favorites/makeup/prod-2')
+      .post(`/api/favorites/makeup/${PRODUCT_ID_2}`)
       .set('Authorization', 'Bearer test-token');
 
     expect(res.status).toBe(201);
@@ -106,7 +113,7 @@ describe('POST /api/favorites/makeup/:productId', () => {
     (prisma.favorite.create as jest.Mock).mockRejectedValue({ code: 'P2002' });
 
     const res = await request(app)
-      .post('/api/favorites/makeup/prod-1')
+      .post(`/api/favorites/makeup/${PRODUCT_ID_1}`)
       .set('Authorization', 'Bearer test-token');
 
     expect(res.status).toBe(400);
@@ -118,16 +125,16 @@ describe('POST /api/favorites/hairstyle/:hairstyleId', () => {
   it('adds a hairstyle to favorites', async () => {
     const newFav = {
       id: 'fav-4',
-      userId: 'user-1',
+      userId: USER_ID,
       productId: null,
-      hairstyleId: 'hair-2',
+      hairstyleId: HAIRSTYLE_ID_2,
       createdAt: new Date(),
-      hairstyle: { id: 'hair-2', name: 'Pixie Cut' },
+      hairstyle: { id: HAIRSTYLE_ID_2, name: 'Pixie Cut' },
     };
     (prisma.favorite.create as jest.Mock).mockResolvedValue(newFav);
 
     const res = await request(app)
-      .post('/api/favorites/hairstyle/hair-2')
+      .post(`/api/favorites/hairstyle/${HAIRSTYLE_ID_2}`)
       .set('Authorization', 'Bearer test-token');
 
     expect(res.status).toBe(201);
@@ -139,7 +146,7 @@ describe('POST /api/favorites/hairstyle/:hairstyleId', () => {
     (prisma.favorite.create as jest.Mock).mockRejectedValue({ code: 'P2002' });
 
     const res = await request(app)
-      .post('/api/favorites/hairstyle/hair-1')
+      .post(`/api/favorites/hairstyle/${HAIRSTYLE_ID_1}`)
       .set('Authorization', 'Bearer test-token');
 
     expect(res.status).toBe(400);
@@ -152,7 +159,7 @@ describe('DELETE /api/favorites/makeup/:productId', () => {
     (prisma.favorite.deleteMany as jest.Mock).mockResolvedValue({ count: 1 });
 
     const res = await request(app)
-      .delete('/api/favorites/makeup/prod-1')
+      .delete(`/api/favorites/makeup/${PRODUCT_ID_1}`)
       .set('Authorization', 'Bearer test-token');
 
     expect(res.status).toBe(200);
@@ -166,7 +173,7 @@ describe('DELETE /api/favorites/hairstyle/:hairstyleId', () => {
     (prisma.favorite.deleteMany as jest.Mock).mockResolvedValue({ count: 1 });
 
     const res = await request(app)
-      .delete('/api/favorites/hairstyle/hair-1')
+      .delete(`/api/favorites/hairstyle/${HAIRSTYLE_ID_1}`)
       .set('Authorization', 'Bearer test-token');
 
     expect(res.status).toBe(200);

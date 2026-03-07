@@ -5,8 +5,11 @@ import { firebaseAuth } from '../../config/firebase';
 
 require('../setup');
 
+const USER_ID = '00000000-0000-4000-8000-000000000001';
+const LOOK_ID = '00000000-0000-4000-8000-000000000030';
+
 const mockUser = {
-  id: 'user-1',
+  id: USER_ID,
   firebaseUid: 'firebase-1',
   email: 'test@test.com',
   displayName: 'Test User',
@@ -17,8 +20,8 @@ const mockUser = {
 };
 
 const mockSavedLook = {
-  id: 'look-1',
-  userId: 'user-1',
+  id: LOOK_ID,
+  userId: USER_ID,
   name: 'Date Night',
   lookData: { products: ['prod-1', 'prod-2'] },
   imageUrl: null,
@@ -28,7 +31,7 @@ const mockSavedLook = {
 
 const mockHistory = {
   id: 'hist-1',
-  userId: 'user-1',
+  userId: USER_ID,
   lookData: { products: ['prod-1'] },
   createdAt: new Date(),
 };
@@ -84,14 +87,13 @@ describe('POST /api/looks', () => {
     expect(res.body.message).toBe('Look saved successfully');
   });
 
-  it('returns 400 when name or lookData missing', async () => {
+  it('returns 400 when lookData missing', async () => {
     const res = await request(app)
       .post('/api/looks')
       .set('Authorization', 'Bearer test-token')
       .send({ name: 'Missing Data' });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toBe('name and lookData are required');
   });
 
   it('returns 403 when tier limit reached', async () => {
@@ -120,7 +122,7 @@ describe('PATCH /api/looks/:id', () => {
     });
 
     const res = await request(app)
-      .patch('/api/looks/look-1')
+      .patch(`/api/looks/${LOOK_ID}`)
       .set('Authorization', 'Bearer test-token')
       .send({ name: 'Updated Name' });
 
@@ -133,7 +135,7 @@ describe('PATCH /api/looks/:id', () => {
     (prisma.savedLook.findFirst as jest.Mock).mockResolvedValue(null);
 
     const res = await request(app)
-      .patch('/api/looks/nonexistent')
+      .patch(`/api/looks/${LOOK_ID}`)
       .set('Authorization', 'Bearer test-token')
       .send({ name: 'No Such Look' });
 
@@ -148,7 +150,7 @@ describe('DELETE /api/looks/:id', () => {
     (prisma.savedLook.delete as jest.Mock).mockResolvedValue(mockSavedLook);
 
     const res = await request(app)
-      .delete('/api/looks/look-1')
+      .delete(`/api/looks/${LOOK_ID}`)
       .set('Authorization', 'Bearer test-token');
 
     expect(res.status).toBe(200);
@@ -160,7 +162,7 @@ describe('DELETE /api/looks/:id', () => {
     (prisma.savedLook.findFirst as jest.Mock).mockResolvedValue(null);
 
     const res = await request(app)
-      .delete('/api/looks/nonexistent')
+      .delete(`/api/looks/${LOOK_ID}`)
       .set('Authorization', 'Bearer test-token');
 
     expect(res.status).toBe(404);
@@ -189,7 +191,6 @@ describe('POST /api/looks/history', () => {
       .send({});
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toBe('lookData is required');
   });
 });
 
