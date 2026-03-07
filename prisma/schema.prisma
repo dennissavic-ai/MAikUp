@@ -101,6 +101,7 @@ model MakeupProduct {
 
   favorites     Favorite[]
   lookProducts  LookProduct[]
+  arAssets      ArAsset[]
 
   @@index([category, subcategory])
   @@index([tier])
@@ -174,6 +175,7 @@ model Hairstyle {
   updatedAt     DateTime          @updatedAt @map("updated_at")
 
   favorites     Favorite[]
+  arAssets      ArAsset[]
 
   @@index([category, subcategory])
   @@index([tier])
@@ -322,6 +324,9 @@ model ArAsset {
   isActive      Boolean     @default(true) @map("is_active")
   createdAt     DateTime    @default(now()) @map("created_at")
   updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  product       MakeupProduct? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  hairstyle     Hairstyle?     @relation(fields: [hairstyleId], references: [id], onDelete: SetNull)
 
   @@index([productId])
   @@index([hairstyleId])

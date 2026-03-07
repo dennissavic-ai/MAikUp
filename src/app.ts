@@ -24,6 +24,7 @@ import notificationRoutes from './routes/notifications';
 import arAssetRoutes from './routes/ar-assets';
 import trendingRoutes from './routes/trending';
 import searchRoutes from './routes/search';
+import tryOnRoutes from './routes/try-on';
 
 const app = express();
 
@@ -74,6 +75,7 @@ app.use('/api/sharing', tieredLimiter, sharingRoutes);
 app.use('/api/analytics', tieredLimiter, analyticsRoutes);
 app.use('/api/uploads', tieredLimiter, uploadRoutes);
 app.use('/api/notifications', tieredLimiter, notificationRoutes);
+app.use('/api/try-on', tieredLimiter, tryOnRoutes);
 
 // Admin routes use tiered limiter (admins get 1000 req/15min)
 app.use('/api/admin', tieredLimiter, adminRoutes);
