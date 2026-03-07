@@ -10,7 +10,7 @@ import crypto from 'crypto';
 const router = Router();
 
 // Share a saved look (generate shareable link)
-router.post('/:savedLookId', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/:savedLookId', authenticate, validate(schemas.savedLookIdParams, 'params'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const savedLookId = req.params.savedLookId as string;
 
@@ -58,7 +58,7 @@ router.post('/:savedLookId', authenticate, async (req: AuthenticatedRequest, res
 });
 
 // View a shared look (public, no auth required)
-router.get('/view/:shareCode', async (req: Request, res: Response) => {
+router.get('/view/:shareCode', validate(schemas.shareCodeParams, 'params'), async (req: Request, res: Response) => {
   try {
     const shareCode = req.params.shareCode as string;
 
@@ -95,7 +95,7 @@ router.get('/view/:shareCode', async (req: Request, res: Response) => {
 });
 
 // Unshare a look
-router.delete('/:savedLookId', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.delete('/:savedLookId', authenticate, validate(schemas.savedLookIdParams, 'params'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     await prisma.sharedLook.deleteMany({
       where: {

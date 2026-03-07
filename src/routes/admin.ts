@@ -99,13 +99,9 @@ router.get('/users', async (req: AuthenticatedRequest, res: Response) => {
   }
 });
 
-router.patch('/users/:id/role', async (req: AuthenticatedRequest, res: Response) => {
+router.patch('/users/:id/role', validate(schemas.updateUserRole), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { role } = req.body;
-    if (!['USER', 'ADMIN'].includes(role)) {
-      sendError(res, 'Invalid role');
-      return;
-    }
 
     const user = await prisma.user.update({
       where: { id: req.params.id as string },
@@ -120,7 +116,7 @@ router.patch('/users/:id/role', async (req: AuthenticatedRequest, res: Response)
 
 // ─── Makeup Product Management ───────────────────────────────
 
-router.post('/products', async (req: AuthenticatedRequest, res: Response) => {
+router.post('/products', validate(schemas.createProduct), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const product = await prisma.makeupProduct.create({
       data: req.body,
@@ -132,7 +128,7 @@ router.post('/products', async (req: AuthenticatedRequest, res: Response) => {
   }
 });
 
-router.patch('/products/:id', async (req: AuthenticatedRequest, res: Response) => {
+router.patch('/products/:id', validate(schemas.updateProduct), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const product = await prisma.makeupProduct.update({
       where: { id: req.params.id as string },
@@ -160,7 +156,7 @@ router.delete('/products/:id', async (req: AuthenticatedRequest, res: Response) 
 
 // ─── Hairstyle Management ────────────────────────────────────
 
-router.post('/hairstyles', async (req: AuthenticatedRequest, res: Response) => {
+router.post('/hairstyles', validate(schemas.createHairstyle), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const hairstyle = await prisma.hairstyle.create({
       data: req.body,
@@ -200,7 +196,7 @@ router.delete('/hairstyles/:id', async (req: AuthenticatedRequest, res: Response
 
 // ─── Look Management ─────────────────────────────────────────
 
-router.post('/looks', async (req: AuthenticatedRequest, res: Response) => {
+router.post('/looks', validate(schemas.createAdminLook), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { productIds, ...lookData } = req.body;
 
