@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../config/database';
 import { authenticate, optionalAuth } from '../middleware/auth';
 import { requireAdmin } from '../middleware/admin';
+import { validate } from '../middleware/validate';
+import * as schemas from '../validation/schemas';
 import { AuthenticatedRequest } from '../types';
 import { sendSuccess, sendPaginated, sendError } from '../utils/response';
 import { parsePagination } from '../utils/pagination';
@@ -56,14 +58,9 @@ router.get('/hairstyle/:hairstyleId', optionalAuth, async (req: AuthenticatedReq
 });
 
 // Batch fetch AR assets for multiple products (for preloading a full look)
-router.post('/batch', optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/batch', optionalAuth, validate(schemas.batchFetchAssets), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { productIds, hairstyleIds } = req.body;
-
-    if (!productIds?.length && !hairstyleIds?.length) {
-      sendError(res, 'Provide productIds and/or hairstyleIds arrays');
-      return;
-    }
 
     const where: Prisma.ArAssetWhereInput = {
       isActive: true,
@@ -155,7 +152,7 @@ router.get('/', authenticate, requireAdmin, async (req: AuthenticatedRequest, re
 });
 
 // Create AR asset (admin)
-router.post('/', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/', authenticate, requireAdmin, validate(schemas.createArAsset), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const asset = await prisma.arAsset.create({ data: req.body });
     sendSuccess(res, asset, 'AR asset created', 201);
@@ -165,7 +162,7 @@ router.post('/', authenticate, requireAdmin, async (req: AuthenticatedRequest, r
 });
 
 // Update AR asset (admin)
-router.patch('/:id', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+router.patch('/:id', authenticate, requireAdmin, validate(schemas.updateArAsset), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const asset = await prisma.arAsset.update({
       where: { id: req.params.id as string },

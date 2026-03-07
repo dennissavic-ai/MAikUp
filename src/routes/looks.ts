@@ -1,6 +1,8 @@
 import { Router, Response } from 'express';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import * as schemas from '../validation/schemas';
 import { AuthenticatedRequest } from '../types';
 import { sendSuccess, sendPaginated, sendError } from '../utils/response';
 import { parsePagination } from '../utils/pagination';
@@ -32,14 +34,9 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response) =
 });
 
 // Save a new look
-router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/', authenticate, validate(schemas.saveLook), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { name, lookData, imageUrl } = req.body;
-
-    if (!name || !lookData) {
-      sendError(res, 'name and lookData are required');
-      return;
-    }
 
     // Check tier limits on saved looks
     const subscription = await prisma.subscription.findUnique({
@@ -74,7 +71,7 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
 });
 
 // Update a saved look
-router.patch('/:id', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.patch('/:id', authenticate, validate(schemas.updateLook), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { name, lookData, imageUrl } = req.body;
 
@@ -123,14 +120,9 @@ router.delete('/:id', authenticate, async (req: AuthenticatedRequest, res: Respo
 });
 
 // Record look history (when user tries on a look)
-router.post('/history', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/history', authenticate, validate(schemas.recordHistory), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { lookData } = req.body;
-
-    if (!lookData) {
-      sendError(res, 'lookData is required');
-      return;
-    }
 
     const history = await prisma.lookHistory.create({
       data: {

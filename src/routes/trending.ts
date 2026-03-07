@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { requireAdmin } from '../middleware/admin';
+import { validate } from '../middleware/validate';
+import * as schemas from '../validation/schemas';
 import { AuthenticatedRequest } from '../types';
 import { sendSuccess, sendError } from '../utils/response';
 
@@ -137,7 +139,7 @@ router.get('/auto', async (_req: Request, res: Response) => {
 // ─── Admin Endpoints ─────────────────────────────────────────
 
 // Create featured item
-router.post('/', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/', authenticate, requireAdmin, validate(schemas.createFeaturedItem), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const item = await prisma.featuredItem.create({ data: req.body });
     sendSuccess(res, item, 'Featured item created', 201);
@@ -147,7 +149,7 @@ router.post('/', authenticate, requireAdmin, async (req: AuthenticatedRequest, r
 });
 
 // Update featured item
-router.patch('/:id', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+router.patch('/:id', authenticate, requireAdmin, validate(schemas.updateFeaturedItem), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const item = await prisma.featuredItem.update({
       where: { id: req.params.id as string },
@@ -170,14 +172,9 @@ router.delete('/:id', authenticate, requireAdmin, async (req: AuthenticatedReque
 });
 
 // Reorder featured items
-router.post('/reorder', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/reorder', authenticate, requireAdmin, validate(schemas.reorderItems), async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { items } = req.body; // [{ id: "...", position: 0 }, ...]
-
-    if (!Array.isArray(items)) {
-      sendError(res, 'items array is required');
-      return;
-    }
+    const { items } = req.body;
 
     await Promise.all(
       items.map((item: { id: string; position: number }) =>

@@ -1,20 +1,17 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../config/database';
+import { validate } from '../middleware/validate';
+import * as schemas from '../validation/schemas';
 import { sendSuccess, sendError } from '../utils/response';
 
 const router = Router();
 
 // Unified search across all catalogs
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', validate(schemas.searchQuery, 'query'), async (req: Request, res: Response) => {
   try {
     const q = req.query.q as string;
     const type = req.query.type as string; // "all", "makeup", "hairstyles", "looks"
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
-
-    if (!q || q.trim().length < 2) {
-      sendError(res, 'Search query must be at least 2 characters');
-      return;
-    }
 
     const searchTerm = q.trim();
     const searchType = type || 'all';
@@ -101,14 +98,9 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // Autocomplete / suggestions
-router.get('/suggest', async (req: Request, res: Response) => {
+router.get('/suggest', validate(schemas.suggestQuery, 'query'), async (req: Request, res: Response) => {
   try {
     const q = req.query.q as string;
-
-    if (!q || q.trim().length < 1) {
-      sendSuccess(res, []);
-      return;
-    }
 
     const searchTerm = q.trim();
     const limit = 8;

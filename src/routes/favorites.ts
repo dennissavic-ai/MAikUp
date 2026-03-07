@@ -1,6 +1,8 @@
 import { Router, Response } from 'express';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import * as schemas from '../validation/schemas';
 import { AuthenticatedRequest } from '../types';
 import { sendSuccess, sendPaginated, sendError } from '../utils/response';
 import { parsePagination } from '../utils/pagination';
@@ -46,7 +48,7 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response) =
 });
 
 // Add a makeup product to favorites
-router.post('/makeup/:productId', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/makeup/:productId', authenticate, validate(schemas.favoriteProductParams, 'params'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const favorite = await prisma.favorite.create({
       data: {
@@ -67,7 +69,7 @@ router.post('/makeup/:productId', authenticate, async (req: AuthenticatedRequest
 });
 
 // Add a hairstyle to favorites
-router.post('/hairstyle/:hairstyleId', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/hairstyle/:hairstyleId', authenticate, validate(schemas.favoriteHairstyleParams, 'params'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const favorite = await prisma.favorite.create({
       data: {
@@ -88,7 +90,7 @@ router.post('/hairstyle/:hairstyleId', authenticate, async (req: AuthenticatedRe
 });
 
 // Remove a makeup product from favorites
-router.delete('/makeup/:productId', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.delete('/makeup/:productId', authenticate, validate(schemas.favoriteProductParams, 'params'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     await prisma.favorite.deleteMany({
       where: {
@@ -104,7 +106,7 @@ router.delete('/makeup/:productId', authenticate, async (req: AuthenticatedReque
 });
 
 // Remove a hairstyle from favorites
-router.delete('/hairstyle/:hairstyleId', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.delete('/hairstyle/:hairstyleId', authenticate, validate(schemas.favoriteHairstyleParams, 'params'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     await prisma.favorite.deleteMany({
       where: {

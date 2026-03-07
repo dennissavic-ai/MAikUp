@@ -1,6 +1,8 @@
 import { Router, Response } from 'express';
 import { authenticate } from '../middleware/auth';
 import { requireAdmin } from '../middleware/admin';
+import { validate } from '../middleware/validate';
+import * as schemas from '../validation/schemas';
 import { AuthenticatedRequest } from '../types';
 import { sendSuccess, sendError } from '../utils/response';
 import { generateUploadUrl, getPublicUrl } from '../config/s3';

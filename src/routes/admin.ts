@@ -2,6 +2,8 @@ import { Router, Response } from 'express';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { requireAdmin } from '../middleware/admin';
+import { validate } from '../middleware/validate';
+import * as schemas from '../validation/schemas';
 import { AuthenticatedRequest } from '../types';
 import { sendSuccess, sendPaginated, sendError } from '../utils/response';
 import { parsePagination } from '../utils/pagination';
