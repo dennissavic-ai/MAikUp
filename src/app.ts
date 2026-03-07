@@ -3,9 +3,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import compression from 'compression';
-import rateLimit from 'express-rate-limit';
 import { env } from './config/env';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { tieredLimiter, strictLimiter, catalogLimiter } from './middleware/rateLimiter';
 
 // Route imports
 import healthRoutes from './routes/health';
@@ -21,6 +21,9 @@ import analyticsRoutes from './routes/analytics';
 import sharingRoutes from './routes/sharing';
 import uploadRoutes from './routes/uploads';
 import notificationRoutes from './routes/notifications';
+import arAssetRoutes from './routes/ar-assets';
+import trendingRoutes from './routes/trending';
+import searchRoutes from './routes/search';
 
 const app = express();
 
@@ -35,16 +38,6 @@ app.use(
   })
 );
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, error: 'Too many requests, please try again later' },
-});
-app.use('/api/', limiter);
-
 // Body parsing - raw body needed for Stripe webhooks
 app.use('/api/subscription/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10mb' }));
@@ -57,21 +50,33 @@ if (env.isDev) {
   app.use(morgan('combined'));
 }
 
-// ─── Routes ──────────────────────────────────────────────────
+// ─── Routes with Tiered Rate Limiting ────────────────────────
 
+// No rate limit on health check
 app.use('/api/health', healthRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/subscription', subscriptionRoutes);
-app.use('/api/makeup', makeupRoutes);
-app.use('/api/hairstyles', hairstyleRoutes);
-app.use('/api/favorites', favoriteRoutes);
-app.use('/api/looks', lookRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/recommendations', recommendationRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/sharing', sharingRoutes);
-app.use('/api/uploads', uploadRoutes);
-app.use('/api/notifications', notificationRoutes);
+
+// Strict rate limit on auth & payment endpoints
+app.use('/api/auth', strictLimiter, authRoutes);
+app.use('/api/subscription', strictLimiter, subscriptionRoutes);
+
+// Permissive rate limit on read-heavy catalog endpoints
+app.use('/api/makeup', catalogLimiter, makeupRoutes);
+app.use('/api/hairstyles', catalogLimiter, hairstyleRoutes);
+app.use('/api/search', catalogLimiter, searchRoutes);
+app.use('/api/trending', catalogLimiter, trendingRoutes);
+app.use('/api/recommendations', catalogLimiter, recommendationRoutes);
+app.use('/api/ar', catalogLimiter, arAssetRoutes);
+
+// Tiered rate limit on user-action endpoints
+app.use('/api/favorites', tieredLimiter, favoriteRoutes);
+app.use('/api/looks', tieredLimiter, lookRoutes);
+app.use('/api/sharing', tieredLimiter, sharingRoutes);
+app.use('/api/analytics', tieredLimiter, analyticsRoutes);
+app.use('/api/uploads', tieredLimiter, uploadRoutes);
+app.use('/api/notifications', tieredLimiter, notificationRoutes);
+
+// Admin routes use tiered limiter (admins get 1000 req/15min)
+app.use('/api/admin', tieredLimiter, adminRoutes);
 
 // ─── Error Handling ──────────────────────────────────────────
 

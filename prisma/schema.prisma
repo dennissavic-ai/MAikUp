@@ -293,3 +293,67 @@ model SkinToneRecommendation {
   @@index([skinTone, skinUndertone])
   @@map("skin_tone_recommendations")
 }
+
+// ─── AR Assets ───────────────────────────────────────────────
+
+enum ArAssetType {
+  MAKEUP_OVERLAY   // 2D texture overlay for makeup (eyeshadow, blush, lip color)
+  FACE_MESH        // 3D face mesh modification (contour, highlight)
+  HAIR_MODEL       // 3D hair model for hairstyle try-on
+  ACCESSORY_MODEL  // 3D accessory model (hair clips, headbands)
+}
+
+model ArAsset {
+  id            String      @id @default(uuid())
+  productId     String?     @map("product_id")
+  hairstyleId   String?     @map("hairstyle_id")
+  assetType     ArAssetType @map("asset_type")
+  modelUrl      String      @map("model_url")       // URL to 3D model file (.glb/.gltf)
+  textureUrl    String?     @map("texture_url")      // URL to texture/overlay image
+  thumbnailUrl  String?     @map("thumbnail_url")
+  anchorPoint   String?     @map("anchor_point")     // Face landmark anchor: "lips", "left_eye", "right_eye", "nose", "forehead", "left_cheek", "right_cheek", "chin", "full_face", "head"
+  blendMode     String?     @map("blend_mode")       // "multiply", "overlay", "screen", "normal"
+  opacity       Float       @default(0.8)            // Default opacity 0.0-1.0
+  scale         Json?                                // { x: 1.0, y: 1.0, z: 1.0 }
+  offset        Json?                                // { x: 0, y: 0, z: 0 } offset from anchor
+  metadata      Json?                                // Additional rendering params
+  version       Int         @default(1)              // Asset version for cache busting
+  fileSizeBytes Int?        @map("file_size_bytes")
+  isActive      Boolean     @default(true) @map("is_active")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  @@index([productId])
+  @@index([hairstyleId])
+  @@index([assetType])
+  @@map("ar_assets")
+}
+
+// ─── Featured / Trending ─────────────────────────────────────
+
+enum FeaturedType {
+  PRODUCT
+  LOOK
+  HAIRSTYLE
+  COLLECTION
+}
+
+model FeaturedItem {
+  id          String       @id @default(uuid())
+  type        FeaturedType
+  entityId    String       @map("entity_id")
+  title       String
+  subtitle    String?
+  imageUrl    String?      @map("image_url")
+  position    Int          @default(0)               // Display order
+  section     String       @default("trending")      // "trending", "editors_pick", "new", "seasonal"
+  startDate   DateTime?    @map("start_date")        // When to start showing
+  endDate     DateTime?    @map("end_date")           // When to stop showing
+  isActive    Boolean      @default(true) @map("is_active")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  @@index([section, isActive])
+  @@index([type])
+  @@map("featured_items")
+}
